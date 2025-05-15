@@ -1,7 +1,6 @@
-flask
+Flask
 dotenv
-pyjwt
-flask_mysqldb
+PyJWT
 bcrypt
 flask_sqlalchemy
 uuid

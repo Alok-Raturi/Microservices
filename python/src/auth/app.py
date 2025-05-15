@@ -1,11 +1,12 @@
 import os
-import uuid
 import jwt
 import bcrypt
+
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
+from uuid import uuid4
 from urllib.parse import quote_plus
 
 load_dotenv()
@@ -37,7 +38,6 @@ def login():
     email = request.form['email']
     password = request.form['password']
 
-    # Use SQLAlchemy query instead of cursor
     user = User.query.filter_by(email=email).first()
 
     if not user:
@@ -61,21 +61,18 @@ def signup():
     email = request.form['email']
     password = request.form['password']
 
-    # Check if user exists using SQLAlchemy
     existing_user = User.query.filter_by(email=email).first()
     if existing_user:
         return jsonify({"error": "Email already registered"}), 401
 
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
-    # Create new user with SQLAlchemy
     new_user = User(
-        id=str(uuid.uuid4()),
+        id=str(uuid4()),
         email=email,
         password=hashed_password.decode('utf-8')
     )
 
-    # Add and commit to database
     db.session.add(new_user)
     db.session.commit()
 
@@ -83,7 +80,6 @@ def signup():
 
 
 if __name__ == '__main__':
-    # Create tables before running the app
     with app.app_context():
         db.create_all()
     app.run(host='0.0.0.0', port=5000, debug=True)
