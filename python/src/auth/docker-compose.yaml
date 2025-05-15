@@ -1,0 +1,40 @@
+services:
+  mysql:
+    image: mysql:latest
+    container_name: mysql-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: testing@123
+      MYSQL_DATABASE: microservices
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./init:/docker-entrypoint-initdb.d
+      - mysql-data:/var/lib/mysql
+    networks:
+      - bridge
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: auth-service
+    restart: always
+    environment:
+      MYSQL_HOST: mysql-db
+      MYSQL_USER: root
+      MYSQL_PASSWORD: testing@123
+      MYSQL_DB: microservices
+      JWT_SECRET_KEY: testingsecret@123
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mysql
+    networks:
+      - bridge
+
+networks:
+  bridge:
+
+volumes:
+  mysql-data:

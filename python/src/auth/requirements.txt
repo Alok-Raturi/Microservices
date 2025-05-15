@@ -1,0 +1,7 @@
+flask
+dotenv
+pyjwt
+flask_mysqldb
+bcrypt
+flask_sqlalchemy
+uuid
