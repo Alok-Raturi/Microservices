@@ -1,0 +1,5 @@
+python-dotenv
+Flask
+pymongo
+PyJWT
+pika

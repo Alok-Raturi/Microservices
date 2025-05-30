@@ -5,7 +5,7 @@ import bcrypt
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime, timedelta
+import time
 from uuid import uuid4
 from urllib.parse import quote_plus
 
@@ -49,7 +49,7 @@ def login():
     payload = {
         'user_id': user.id,
         'email': user.email,
-        'exp': datetime.utcnow() + timedelta(hours=1)
+        'exp': int(round(time.time())) + 3600
     }
     token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
 

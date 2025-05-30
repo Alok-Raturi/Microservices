@@ -1,0 +1,51 @@
+
+services:
+  mongo:
+    image: mongo:latest
+    container_name: mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    volumes:
+      - mongo_data:/data/db
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    depends_on:
+      - mongo
+    ports:
+      - "5672:5672"      # AMQP protocol
+      - "15672:15672"    # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gateway_service
+    restart: always
+    environment:
+      MONGO_HOST: mongo
+      MONGO_DB: videos
+      MONGO_COLLECTION: videos
+      JWT_SECRET_KEY: Alok@123
+      RABBITMQ_HOST=localhost
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mysql
+    networks:
+      - bridge
+
+volumes:
+  rabbitmq_data:
+  mongo_data:
