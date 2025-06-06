@@ -12,7 +12,7 @@ import json
 
 # load_dotenv()
 
-def process_video(video_id):
+def process_video(video_id,email,user_id):
     try:
         video_id = ObjectId(video_id)
         grid_out = video_gridfs.get(video_id)
@@ -30,7 +30,7 @@ def process_video(video_id):
             mp3_media.audio.write_audiofile(f"{video_id}.mp3")
 
             with open(f"{video_id}.mp3", "rb") as audio_file:
-                file_id = mp3_gridfs.put(audio_file, filename=f"{video_id}.mp3")
+                file_id = mp3_gridfs.put(audio_file, filename=f"{video_id}.mp3",email=email,user_id=user_id)
                 channel.basic_publish(
                     exchange='',
                     routing_key=RABBITMQ_MP3_QUEUE_NAME,
@@ -38,7 +38,9 @@ def process_video(video_id):
                                         'file_id': str(file_id),
                                         'filename': f"{video_id}.mp3",
                                         'success':True,
-                                        'message': 'Audio extracted successfully'
+                                        'message': 'Audio extracted successfully',
+                                        'email': email,
+                                        'user_id': user_id
                                      }),
                     properties=pika.BasicProperties(
                         delivery_mode=2, 
@@ -54,17 +56,22 @@ def process_video(video_id):
                     routing_key=RABBITMQ_MP3_QUEUE_NAME,
                     body=json.dumps({'video_id': str(video_id),
                                         'success': False,
-                                        'message': 'Failed to process video'
+                                        'message': 'Failed to process video',
+                                        'email': email,
+                                        'user_id': user_id
                                      }),
                     properties=pika.BasicProperties(
                         delivery_mode=2, 
                     )
                 )
 
-def callback(ch, method, properties, video_id):
+def callback(ch, method, properties, data):
     try:
-        vid = video_id.decode('utf-8')
-        process_video(vid)
+        data  = json.loads(data)
+        video_id = data.get('video_id').decode('utf-8')
+        email = data.get('email')
+        user_id = data.get('user_id')
+        process_video(video_id,email,user_id)
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     except Exception as e:
