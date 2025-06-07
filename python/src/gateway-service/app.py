@@ -20,13 +20,15 @@ MONGODB_PORT = int(os.getenv("MONGODB_PORT"))
 RABBITMQ_HOST = os.getenv("RABBITMQ_HOST")
 RABBITMQ_VIDEO_QUEUE = os.getenv("RABBITMQ_VIDEO_HOST")
 
+print(MONGODB_VIDEOS_COLLECTION, MONGODB_AUDIOS_COLLECTION, JWT_SECRET, MONGODB_HOST, MONGODB_PORT, RABBITMQ_HOST, RABBITMQ_VIDEO_QUEUE)
+
 app = Flask(__name__)
 client = MongoClient(f"mongodb://{MONGODB_HOST}:{MONGODB_PORT}/")
 gridfs_video = gridfs.GridFS(client[MONGODB_VIDEOS_COLLECTION])
 gridfs_audio = gridfs.GridFS(client[MONGODB_AUDIOS_COLLECTION])
 connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_HOST))
 channel = connection.channel()
-channel.queue_declare(queue='video', durable=True)
+channel.queue_declare(queue=RABBITMQ_VIDEO_QUEUE, durable=True)
 
 @app.before_request
 def auth_middleware():

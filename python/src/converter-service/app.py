@@ -8,9 +8,9 @@ from bson import ObjectId
 import tempfile
 import os
 import json
-# from dotenv import load_dotenv
+from dotenv import load_dotenv
 
-# load_dotenv()
+load_dotenv()
 
 def process_video(video_id,email,user_id):
     try:
@@ -67,14 +67,18 @@ def process_video(video_id,email,user_id):
 
 def callback(ch, method, properties, data):
     try:
+        print("Received data from RabbitMQ:")
         data  = json.loads(data)
-        video_id = data.get('video_id').decode('utf-8')
+        video_id = data.get('video_id')
         email = data.get('email')
         user_id = data.get('user_id')
+        print(f"Processing video_id: {video_id}, email: {email}, user_id: {user_id}")
         process_video(video_id,email,user_id)
+        print(f"Processed video_id: {video_id}, email: {email}, user_id: {user_id}")
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     except Exception as e:
+        print(f"Error processing message: {e}")
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
 
@@ -87,6 +91,7 @@ if __name__ == "__main__":
     RABBITMQ_VIDEO_QUEUE_NAME = os.getenv('RABBITMQ_VIDEO_QUEUE_NAME')
     RABBITMQ_MP3_QUEUE_NAME = os.getenv('RABBITMQ_MP3_QUEUE_NAME')
 
+    print(MONGO_HOST, MONGO_PORT, MONGO_VIDEO_COLLECTION_NAME, MONGO_MP3_COLLECTION_NAME, RABBITMQ_HOST, RABBITMQ_VIDEO_QUEUE_NAME, RABBITMQ_MP3_QUEUE_NAME)
     client = MongoClient(f"mongodb://{MONGO_HOST}:{MONGO_PORT}/")
     video_db = client[MONGO_VIDEO_COLLECTION_NAME]
     video_gridfs = gridfs.GridFS(video_db)
@@ -101,5 +106,5 @@ if __name__ == "__main__":
 
     channel.basic_qos(prefetch_count=1)
     channel.basic_consume(queue=RABBITMQ_VIDEO_QUEUE_NAME, on_message_callback=callback)
-
+    print("Started Consuming from RabbitMQ...")
     channel.start_consuming()
